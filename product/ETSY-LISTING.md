@@ -40,51 +40,56 @@ budget template
 ## 4. Description (paste this)
 
 ```
-KNOW WHAT YOU CAN SPEND TODAY.
+ADHD-friendly budget spreadsheet for Excel and Google Sheets. See exactly how much you can safely spend today, with no guilt and no 12-tab maze.
 
-Calm Budget Planner is a simple budget spreadsheet built around one number: how much you can safely spend today. No 12-tab maze. No red warnings. No scolding. Designed to be quick and low-effort, especially if traditional budgets overwhelm you.
-
-Works in Microsoft Excel AND Google Sheets. One file, instant download.
+Calm Budget Planner is a simple, gentle budget tracker built around one number: your "safe to spend today." If budgets usually feel like homework, this one is designed to be quick, kind and easy to come back to.
 
 HOW IT WORKS (about 5 minutes to set up)
-1. Setup tab: type your income and savings goal.
-2. Bills tab: list your bills and due days. Type the date when you pay one.
-3. Spending tab: add a line when you buy something.
+1. Setup: type your income and savings goal.
+2. Bills: list your bills and the day each is due. Type the date when you pay one.
+3. Spending: add a line whenever you buy something.
 Then open the Today tab. Your safe-to-spend number is waiting.
 
 WHAT'S INSIDE (7 tabs)
 - Start Here: a one-page guide
-- Today: your safe-to-spend number, a simple "math" box, bills at a glance, and where your money went
-- Setup: income, savings goal, and 12 categories you can rename
-- Bills: due dates and a colour-coded status (paid / due soon / overdue)
-- Spending: a simple log with category dropdowns (room for 1,000 entries)
-- Wait List (optional): park impulse wants for 24 hours. Skipped items add up as money saved
-- Subscriptions (optional): monthly and yearly totals, plus a nudge about ones you stopped using
+- Today: your safe-to-spend number, the simple math behind it, bills at a glance, and where your money went
+- Setup: income, savings goal and 12 spending categories you can rename
+- Bills: due dates with a colour-coded status (paid, due soon, overdue)
+- Spending: an easy log with category dropdowns (room for 1,000 entries)
+- Wait List (optional): park an impulse want for 24 hours. Skipped items add up as money saved
+- Subscriptions (optional): your monthly and yearly total, plus a nudge about ones you have stopped using
 
-MADE TO BE EASY
+WHY IT'S EASY TO KEEP USING
 - Yellow cells are the only ones you type in. Grey cells fill themselves in.
 - New month? Nothing to reset. It rolls over by itself.
-- Fell behind? Add things whenever. No streaks, no shame.
-- Kind wording: overdue bills show amber, not alarm-bell red.
+- Fell behind? Add things whenever you remember. No streaks, no shame.
+- Gentle wording and colours: overdue bills show amber, not alarm-bell red.
 
 WORKS WITH
-Microsoft Excel (Windows, Mac, web), Google Sheets (including the phone app), LibreOffice.
-To use in Google Sheets: upload the file to Google Drive, open it with Google Sheets, then File > Save as Google Sheets.
+Microsoft Excel, Google Sheets (including the phone app) and LibreOffice.
+To use it in Google Sheets: upload the file to Google Drive, open it with Google Sheets, then choose File > Save as Google Sheets.
 
-YOU'LL RECEIVE
-1 spreadsheet file (.xlsx), blank and ready for your numbers. This is a digital download. Nothing is shipped.
+WHAT YOU RECEIVE
+1 spreadsheet file (.xlsx), blank and ready for your numbers. This is an instant digital download. Nothing is shipped.
+
+QUESTIONS
+Can I use another currency? Yes. Select the money cells and change the format (the Start Here tab shows how).
+Do I need to be good with spreadsheets? No. If you can type in a yellow cell, you can use it.
+Can I look at a past month? Yes. The Start Here tab explains how.
+Is it fine to use on my phone? It works in the Google Sheets app, though a bigger screen is easier for setup.
 
 GOOD TO KNOW
-- Currency shows as $ by default and can be changed in two clicks (the Start Here tab explains how).
-- For personal use. Please don't resell or share the file.
+- For personal use. Please do not resell or share the file.
 - Because this is a digital product I can't accept returns, but if something doesn't work, message me and I'll fix it.
 - This is a budgeting tool, not financial, medical or legal advice. "ADHD-friendly" describes the simple, low-pressure design. It is not a treatment.
 
 AI DISCLOSURE
 GentleBudgetShop designed this planner. It was built with the help of an AI assistant (spreadsheet layout and formulas) and then tested and reviewed by me. The listing images are screenshots of the spreadsheet; no AI image generator was used.
+
+Thank you for supporting a small shop. - GentleBudgetShop
 ```
 
-> **Before you publish, edit the AI disclosure line** so it is true. You must open the file yourself, try it with a few made-up numbers, and only then say you "tested and reviewed" it. Your shop name (GentleBudgetShop) is already filled in.
+> **Before you publish:** the AI disclosure says the planner was tested and reviewed by you. Only keep that line once you have opened the file and tried it with a few made-up numbers. You've checked Google Sheets; open it in Excel too (or delete "Microsoft Excel" from the Works With line and the title if you can't). The description's first sentence is what Etsy and Google preview, so keep it first.
 
 ## 5. Listing settings checklist
 
@@ -93,7 +98,7 @@ GentleBudgetShop designed this planner. It was built with the help of an AI assi
 - **Who made it:** I did. **What is it:** a finished product.
 - **Generative AI field:** answer honestly. The images are screenshots, but the product was built with AI assistance. Etsy's current rules and wording change, so read their Creativity Standards page when you list.
 - **Photos:** upload `listing-image-1.png` first, then 2 to 5 in order.
-- **Category:** Craft Supplies & Tools or Paper & Party Supplies > Templates (Etsy shows the exact path in the category picker; choose the closest "Templates / Planners" option).
+- **Category:** In the category box, type "planner" or "budget" and pick the closest planner or template option. The best fit is most likely under **Paper & Party Supplies > Paper > Calendars & Planners > Planners**, but Etsy changes its category list, and I can't view it from here, so go with what Etsy's picker shows for a digital planner or template. Etsy also suggests a category as you type the title; if its suggestion mentions planners, templates or spreadsheets, accept it. Avoid categories for printed or physical goods.
 - **Shipping:** none needed for digital.
 
 ## 6. Keyword research: what I found and what I couldn't
