@@ -1,8 +1,9 @@
 // Serverless endpoint (Vercel-style). Keeps ANTHROPIC_API_KEY on the server.
 import Anthropic from '@anthropic-ai/sdk';
+import { checkLimit, clientIp } from './_ratelimit.js';
 
-interface Req { method?: string; body?: unknown }
-interface Res { status(code: number): Res; json(body: unknown): void }
+interface Req { method?: string; body?: unknown; headers: Record<string, string | string[] | undefined> }
+interface Res { status(code: number): Res; setHeader(name: string, value: string): void; json(body: unknown): void }
 
 const MAX_CHARS = 20000;
 
@@ -36,6 +37,17 @@ export default async function handler(req: Req, res: Res) {
   if (typeof text !== 'string' || text.trim().length < 20) return res.status(400).json({ error: 'Paste the denial notice text first' });
   if (text.length > MAX_CHARS) return res.status(413).json({ error: `Notice is too long (max ${MAX_CHARS} characters)` });
   const facts = typeof extra === 'string' ? extra.slice(0, 2000) : '';
+
+  const limit = await checkLimit(clientIp(req.headers));
+  if (!limit.ok) {
+    res.setHeader('Retry-After', String(limit.retryAfter));
+    const mins = Math.ceil(limit.retryAfter / 60);
+    return res.status(429).json({
+      error: limit.reason === 'global'
+        ? 'The AI helper has hit its daily limit. Try again tomorrow'
+        : `You have used your AI requests for now. Try again in about ${mins} minute${mins === 1 ? '' : 's'}`,
+    });
+  }
 
   const client = new Anthropic();
   try {
