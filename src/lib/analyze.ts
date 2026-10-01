@@ -223,11 +223,19 @@ export function analyze(text: string, letterDate: string): Analysis {
   return { matches, primary, deadlineDays: effectiveDays, deadlineDate, extracted };
 }
 
-export function buildLetter(d: Details, a: Analysis, today = new Date()): string {
+export interface AiResult {
+  summary: string;
+  denial_reasons: string[];
+  urgent: boolean;
+  argument: string;
+  questions_for_user: string[];
+}
+
+export function buildLetter(d: Details, a: Analysis, today = new Date(), aiArgument?: string): string {
   const fmt = (x: Date) => x.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
   const blank = (v: string, label: string) => v.trim() || `[${label}]`;
   const reasons = (a.matches.length ? a.matches : [a.primary]);
-  const body = reasons.map(r => r.argument).join('\n\n');
+  const body = aiArgument?.trim() || reasons.map(r => r.argument).join('\n\n');
   const original = d.letterDate ? parseDate(d.letterDate) : null;
   return `${fmt(today)}
 

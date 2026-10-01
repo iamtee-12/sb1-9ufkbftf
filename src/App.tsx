@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
-import { ClipboardCopy, Download, FileText, Scale, ShieldCheck, CalendarClock, ListChecks, Check } from 'lucide-react';
-import { analyze, buildLetter, SAMPLE, type Details } from './lib/analyze';
+import { Sparkles, ClipboardCopy, Download, FileText, Scale, ShieldCheck, CalendarClock, ListChecks, Check } from 'lucide-react';
+import { analyze, buildLetter, SAMPLE, type Details, type AiResult } from './lib/analyze';
 
 const empty: Details = { patient: '', insurer: '', claimNumber: '', memberId: '', service: '', provider: '', letterDate: '', extra: '', expedited: false };
 
@@ -18,6 +18,29 @@ export default function App() {
   const [d, setD] = useState<Details>(empty);
   const [edited, setEdited] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [ai, setAi] = useState<AiResult | null>(null);
+  const [aiBusy, setAiBusy] = useState(false);
+  const [aiError, setAiError] = useState('');
+
+  const runAi = async () => {
+    setAiBusy(true);
+    setAiError('');
+    try {
+      const r = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, extra: d.extra }),
+      });
+      const body = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(body.error || 'AI is unavailable right now');
+      setAi(body as AiResult);
+      setEdited(null);
+    } catch (e) {
+      setAiError((e instanceof Error ? e.message : 'AI is unavailable') + '. The standard letter below still works.');
+    } finally {
+      setAiBusy(false);
+    }
+  };
 
   const analysis = useMemo(() => (text.trim().length > 20 ? analyze(text, d.letterDate) : null), [text, d.letterDate]);
 
@@ -33,7 +56,7 @@ export default function App() {
     };
   }, [d, analysis]);
 
-  const letter = useMemo(() => (analysis ? edited ?? buildLetter(merged, analysis) : ''), [analysis, merged, edited]);
+  const letter = useMemo(() => (analysis ? edited ?? buildLetter(merged, analysis, new Date(), ai?.argument) : ''), [analysis, merged, edited, ai]);
   const daysLeft = analysis?.deadlineDate ? Math.ceil((analysis.deadlineDate.getTime() - Date.now()) / 86400000) : null;
 
   const copy = async () => {
@@ -61,7 +84,7 @@ export default function App() {
             (<a className="underline" href="https://www.kff.org/patient-consumer-protections/prior-authorization-metrics-provide-new-insights-into-insurer-practices-but-gaps-remain/">KFF, 2023 data</a>).
             Paste your denial notice and get a plain-English explanation, your deadline, and a ready-to-send reconsideration letter.
           </p>
-          <p className="mt-3 text-sm text-emerald-300 flex items-center gap-1"><ShieldCheck size={16} /> Private: everything runs in your browser. Nothing is uploaded.</p>
+          <p className="mt-3 text-sm text-emerald-300 flex items-center gap-1"><ShieldCheck size={16} /> Private by default: the letter builder runs in your browser. The optional AI step asks first.</p>
         </div>
       </header>
 
@@ -69,13 +92,13 @@ export default function App() {
         <section className="bg-white rounded-xl shadow-sm border p-5">
           <div className="flex items-center justify-between mb-2">
             <h2 className="font-semibold flex items-center gap-2"><FileText size={18} /> 1. Paste your denial notice</h2>
-            <button className="text-sm text-emerald-700 underline" onClick={() => { setText(SAMPLE); setEdited(null); }}>Try a sample</button>
+            <button className="text-sm text-emerald-700 underline" onClick={() => { setText(SAMPLE); setEdited(null); setAi(null); }}>Try a sample</button>
           </div>
           <textarea
             className="w-full h-48 border rounded-lg p-3 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500"
             placeholder="Paste the text of the denial notice (Integrated Denial Notice / Notice of Denial of Medical Coverage) here…"
             value={text}
-            onChange={e => { setText(e.target.value); setEdited(null); }}
+            onChange={e => { setText(e.target.value); setEdited(null); setAi(null); }}
           />
           <div className="grid sm:grid-cols-3 gap-3 mt-3">
             {FIELDS.map(([k, label]) => (
@@ -108,6 +131,34 @@ export default function App() {
 
         {analysis && (
           <>
+            <section className="bg-white rounded-xl shadow-sm border p-5">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h2 className="font-semibold flex items-center gap-2"><Sparkles size={18} /> Tailor with AI (optional)</h2>
+                  <p className="text-xs text-slate-500 mt-1 max-w-xl">
+                    Claude reads your notice and writes an argument specific to it. This sends the notice text to our server and to Anthropic to generate the result.
+                    Remove names and ID numbers first if you prefer. Nothing is stored.
+                  </p>
+                </div>
+                <button onClick={runAi} disabled={aiBusy} className="px-4 py-2 rounded-md bg-slate-900 text-white text-sm disabled:opacity-50">
+                  {aiBusy ? 'Reading your notice…' : ai ? 'Run again' : 'Tailor my letter'}
+                </button>
+              </div>
+              {aiError && <p className="text-sm text-amber-700 mt-3">{aiError}</p>}
+              {ai && (
+                <div className="mt-4 text-sm space-y-3">
+                  <p>{ai.summary}</p>
+                  {ai.questions_for_user.length > 0 && (
+                    <div>
+                      <h3 className="font-medium">Strengthen your case</h3>
+                      <ul className="list-disc pl-5 space-y-1 mt-1">{ai.questions_for_user.map(q => <li key={q}>{q}</li>)}</ul>
+                    </div>
+                  )}
+                  <p className="text-xs text-slate-500">AI-written text can contain mistakes. Read the letter, fill the [brackets], and confirm facts and dates before sending.</p>
+                </div>
+              )}
+            </section>
+
             <section className="grid md:grid-cols-2 gap-6">
               <div className="bg-white rounded-xl shadow-sm border p-5">
                 <h2 className="font-semibold flex items-center gap-2"><Scale size={18} /> What it means</h2>
@@ -125,7 +176,7 @@ export default function App() {
               <div className="space-y-6">
                 <div className={`rounded-xl border p-5 ${daysLeft !== null && daysLeft < 30 ? 'bg-red-50 border-red-200' : 'bg-white'}`}>
                   <h2 className="font-semibold flex items-center gap-2"><CalendarClock size={18} /> Your deadline</h2>
-                  {analysis.primary.kind === 'services_ending' ? (
+                  {(analysis.primary.kind === 'services_ending' || ai?.urgent) ? (
                     <p className="mt-2 text-sm text-red-700 font-medium">
                       URGENT: for ending rehab / skilled nursing / home health, call the QIO number on your notice by noon the day before coverage ends. Do not wait to send a letter.
                     </p>
