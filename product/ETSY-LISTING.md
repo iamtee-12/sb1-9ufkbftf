@@ -81,10 +81,10 @@ GOOD TO KNOW
 - This is a budgeting tool, not financial, medical or legal advice. "ADHD-friendly" describes the simple, low-pressure design. It is not a treatment.
 
 AI DISCLOSURE
-[Shop name] designed this planner. It was built with the help of an AI assistant (spreadsheet layout and formulas) and then tested and reviewed by me. The listing images are screenshots of the spreadsheet; no AI image generator was used.
+GentleBudgetShop designed this planner. It was built with the help of an AI assistant (spreadsheet layout and formulas) and then tested and reviewed by me. The listing images are screenshots of the spreadsheet; no AI image generator was used.
 ```
 
-> **Before you publish, edit the AI disclosure line** so it is true. You must open the file yourself, try it with a few made-up numbers, and only then say you "tested and reviewed" it. Replace `[Shop name]` with yours.
+> **Before you publish, edit the AI disclosure line** so it is true. You must open the file yourself, try it with a few made-up numbers, and only then say you "tested and reviewed" it. Your shop name (GentleBudgetShop) is already filled in.
 
 ## 5. Listing settings checklist
 
