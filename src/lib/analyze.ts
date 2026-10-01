@@ -4,6 +4,7 @@ export type DenialKind =
   | 'out_of_network'
   | 'excluded'
   | 'experimental'
+  | 'services_ending'
   | 'coding'
   | 'duplicate'
   | 'timely_filing'
@@ -18,6 +19,7 @@ export interface Details {
   provider: string;
   letterDate: string; // yyyy-mm-dd
   extra: string; // user's own facts, e.g. doctor's reasoning
+  expedited: boolean;
 }
 
 interface Rule {
@@ -42,10 +44,11 @@ const RULES: Rule[] = [
       'Request the exact clinical criteria the insurer used. You are entitled to it, free of charge.',
       'Point out any treatments you already tried that failed.',
       'Ask that the appeal be reviewed by a physician in the same specialty.',
+      'Cite Traditional Medicare coverage rules (NCDs/LCDs): since 2024 Medicare Advantage plans must follow them and cannot add stricter internal criteria.',
     ],
     evidence: ['Letter of medical necessity from your treating doctor', 'Chart notes and test results supporting the diagnosis', 'Records of prior treatments tried', 'Published guidelines or studies supporting the treatment'],
     argument:
-      'The service was medically necessary for my condition and consistent with generally accepted standards of medical practice. My treating physician determined it was appropriate after considering my history and prior treatments. I request the clinical criteria relied upon and review by a physician in the same or similar specialty.',
+      'The service was medically necessary for my condition. Under 42 CFR 422.101(b), a Medicare Advantage plan must apply Traditional Medicare coverage criteria and may not use internal criteria that are more restrictive. My treating physician determined it was appropriate after considering my history and prior treatments. I request the clinical criteria relied upon and review by a physician in the same or similar specialty.',
   },
   {
     kind: 'prior_auth',
@@ -70,13 +73,28 @@ const RULES: Rule[] = [
     plain:
       'The insurer paid little or nothing because the provider is not in its network. Exceptions exist: emergencies, care at an in-network facility, or no in-network option nearby.',
     strategy: [
-      'Check whether it was an emergency or whether you were treated by an out-of-network clinician at an in-network hospital. The No Surprises Act protects you from balance billing in many of these cases.',
+      'Check whether it was an emergency or whether you were treated by an out-of-network clinician at an in-network hospital. Medicare Advantage plans must cover emergency and urgently needed care out of network.',
       'If no in-network provider could treat you in time or nearby, request a network gap exception.',
       'Ask whether the provider was listed as in-network in the insurer\'s directory when you booked.',
     ],
     evidence: ['Screenshot or record of the provider directory listing', 'Proof of emergency or facility context', 'Evidence no in-network provider was available'],
     argument:
-      'This care should be processed at in-network cost-sharing because it was emergency or facility-based care, or because no in-network provider was reasonably available. I request reprocessing in line with the No Surprises Act and my plan\'s network adequacy obligations.',
+      'This care should be processed at in-network cost-sharing because it was emergency or facility-based care, or because no in-network provider was reasonably available. I request reprocessing under Medicare Advantage rules requiring coverage of emergency and urgently needed services regardless of network status.',
+  },
+  {
+    kind: 'services_ending',
+    title: 'Services ending (rehab, SNF, home health)',
+    patterns: [/non-?coverage/i, /skilled nursing/i, /home health/i, /rehab(ilitation)?\b/i, /(coverage|services) (will )?end/i, /last covered day/i, /discharge/i],
+    plain:
+      'The plan says your rehab, skilled nursing or home health coverage is ending. This one is URGENT: you can ask for a fast appeal to an independent reviewer (the QIO) and usually have to call by noon of the day before coverage ends. You can keep receiving care while it is reviewed.',
+    strategy: [
+      'Call the Quality Improvement Organization (QIO) number on your Notice of Medicare Non-Coverage NOW. The deadline is usually noon the day before services end.',
+      'Ask your therapist or doctor to document why you still need skilled care and cannot safely be discharged.',
+      'You do not need to prove this yourself on the call: just say you want a fast appeal.',
+    ],
+    evidence: ['Notice of Medicare Non-Coverage', 'Therapy or nursing notes showing ongoing skilled need', 'Doctor statement that stopping care is unsafe'],
+    argument:
+      'I request an expedited review. Continued skilled care remains medically necessary and it is not safe for me to be discharged or have services stopped at this time. Under Traditional Medicare coverage rules, improvement is not required for coverage; skilled care needed to maintain my condition or prevent decline is covered.',
   },
   {
     kind: 'excluded',
@@ -88,7 +106,7 @@ const RULES: Rule[] = [
       'Request the specific plan provision relied upon, in writing.',
       'Read your Summary of Benefits: exclusions are often narrower than the denial implies.',
       'Argue the service is part of a covered category (for example treatment of a covered condition, not cosmetic).',
-      'Check ACA essential health benefits: many services cannot be excluded.',
+      'Compare against Traditional Medicare: Medicare Advantage plans must cover everything Original Medicare covers.',
     ],
     evidence: ['Your Summary of Benefits and Coverage / plan booklet', 'Doctor\'s note showing the service treats a covered condition', 'Any marketing or website text promising the coverage'],
     argument:
@@ -158,7 +176,7 @@ const UNKNOWN: Rule = {
 export interface Analysis {
   matches: Rule[];
   primary: Rule;
-  deadlineDays: number | null;
+  deadlineDays: number;
   deadlineDate: Date | null;
   extracted: Partial<Details>;
 }
@@ -188,10 +206,9 @@ export function analyze(text: string, letterDate: string): Analysis {
   let deadlineDays: number | null = null;
   if (daysMatch) {
     const n = parseInt(daysMatch[1], 10);
-    if (n >= 15 && n <= 365) deadlineDays = n;
+    if (n >= 1 && n <= 365) deadlineDays = n;
   }
-  if (!deadlineDays && /180/.test(text)) deadlineDays = 180;
-  const effectiveDays = deadlineDays ?? 180; // standard federal minimum for internal appeals
+  const effectiveDays = deadlineDays ?? 60; // Medicare Advantage: 60 calendar days from the notice date
   const base = parseDate(letterDate) ?? parseDate(
     pick(text, [/(?:date|dated)[:\s]+([A-Za-z]+ \d{1,2},? \d{4})/i, /(?:date|dated)[:\s]+(\d{1,2}\/\d{1,2}\/\d{2,4})/i]),
   );
@@ -215,22 +232,22 @@ export function buildLetter(d: Details, a: Analysis, today = new Date()): string
   return `${fmt(today)}
 
 ${blank(d.insurer, 'Insurance company name')}
-Attn: Appeals Department
+Attn: Appeals and Grievances Department
 
-RE: Formal appeal of denied claim
+RE: Request for reconsideration of Medicare Advantage denial
 Patient: ${blank(d.patient, 'Patient name')}
-Member ID: ${blank(d.memberId, 'Member ID')}
+Medicare Advantage member ID: ${blank(d.memberId, 'Member ID')}
 Claim number: ${blank(d.claimNumber, 'Claim number')}
 Service: ${blank(d.service, 'Service or treatment')}
 Provider: ${blank(d.provider, 'Provider name')}
 ${original ? `Date of denial letter: ${fmt(original)}\n` : ''}
-To the Appeals Department:
+To the Appeals and Grievances Department:
 
-I am writing to formally appeal the denial of the claim referenced above, and I request a full and fair review of this decision.
+I am writing to request reconsideration of the denial referenced above, under my rights as a Medicare Advantage enrollee. I request a full and fair review of this decision.
 
 ${body}
 ${d.extra.trim() ? `\nAdditional information:\n${d.extra.trim()}\n` : ''}
-I also request, free of charge, copies of all documents, records and criteria relied upon in making this determination, including the clinical guidelines used and the credentials of the reviewer. If this denial is upheld, please treat this letter as my notice that I intend to seek independent external review.
+I also request, free of charge, copies of all documents, records and criteria relied upon in making this determination, including the clinical guidelines used and the credentials of the reviewer. ${d.expedited ? 'I request an EXPEDITED (72-hour) reconsideration. My physician has indicated, or I believe, that applying the standard timeframe could seriously jeopardize my life, health, or ability to regain maximum function.\n\n' : ''}If this denial is upheld in whole or in part, I understand the plan must forward my case to the Independent Review Entity, and I request that this be done without delay.
 
 Enclosed:
 ${[...new Set(reasons.flatMap(r => r.evidence))].map(e => `  - ${e}`).join('\n')}
@@ -244,7 +261,7 @@ ${blank(d.patient, 'Patient name')}
 `;
 }
 
-export const SAMPLE = `Acme Health Plan
+export const SAMPLE = `Acme Medicare Advantage Plan (HMO)
 Date: September 3, 2026
 
 Re: Jane Doe
@@ -255,4 +272,4 @@ Dear Jane Doe,
 
 We have reviewed the claim for an MRI of the lumbar spine performed by Riverside Imaging on August 12, 2026. We have denied this claim because the service does not meet our clinical criteria for medical necessity. Additionally, prior authorization was not obtained before the service.
 
-If you disagree with this decision you may file an appeal within 180 days of the date of this letter.`;
+If you disagree with this decision you may request a reconsideration within 60 calendar days of the date of this notice.`;

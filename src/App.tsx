@@ -2,13 +2,13 @@ import { useMemo, useState } from 'react';
 import { ClipboardCopy, Download, FileText, Scale, ShieldCheck, CalendarClock, ListChecks, Check } from 'lucide-react';
 import { analyze, buildLetter, SAMPLE, type Details } from './lib/analyze';
 
-const empty: Details = { patient: '', insurer: '', claimNumber: '', memberId: '', service: '', provider: '', letterDate: '', extra: '' };
+const empty: Details = { patient: '', insurer: '', claimNumber: '', memberId: '', service: '', provider: '', letterDate: '', extra: '', expedited: false };
 
-const FIELDS: [keyof Details, string][] = [
+const FIELDS: [Exclude<keyof Details, 'expedited'>, string][] = [
   ['patient', 'Patient name'],
-  ['insurer', 'Insurance company'],
+  ['insurer', 'Medicare Advantage plan'],
   ['claimNumber', 'Claim number'],
-  ['memberId', 'Member ID'],
+  ['memberId', 'Plan member ID'],
   ['service', 'Service / treatment'],
   ['provider', 'Provider'],
 ];
@@ -55,11 +55,11 @@ export default function App() {
       <header className="bg-slate-900 text-white">
         <div className="max-w-5xl mx-auto px-4 py-10">
           <div className="flex items-center gap-2 text-emerald-400 font-semibold"><Scale size={22} /> Overturn</div>
-          <h1 className="text-3xl sm:text-4xl font-bold mt-3">Insurance denied your claim? Fight back in 2 minutes.</h1>
+          <h1 className="text-3xl sm:text-4xl font-bold mt-3">Medicare Advantage denied your care? Appeal in 2 minutes.</h1>
           <p className="mt-3 text-slate-300 max-w-2xl">
-            Fewer than 1% of denied claims are ever appealed, yet about 44% of appeals on HealthCare.gov plans are overturned
-            (<a className="underline" href="https://www.kff.org/private-insurance/claims-denials-and-appeals-in-aca-marketplace-plans-in-2023/">KFF</a>).
-            Paste your denial letter and get a plain-English explanation, your deadline, and a ready-to-send appeal letter.
+            Only about 12% of Medicare Advantage denials are ever appealed, yet about 82% of those appeals are overturned in whole or in part
+            (<a className="underline" href="https://www.kff.org/patient-consumer-protections/prior-authorization-metrics-provide-new-insights-into-insurer-practices-but-gaps-remain/">KFF, 2023 data</a>).
+            Paste your denial notice and get a plain-English explanation, your deadline, and a ready-to-send reconsideration letter.
           </p>
           <p className="mt-3 text-sm text-emerald-300 flex items-center gap-1"><ShieldCheck size={16} /> Private: everything runs in your browser. Nothing is uploaded.</p>
         </div>
@@ -68,12 +68,12 @@ export default function App() {
       <main className="max-w-5xl mx-auto px-4 py-8 space-y-8">
         <section className="bg-white rounded-xl shadow-sm border p-5">
           <div className="flex items-center justify-between mb-2">
-            <h2 className="font-semibold flex items-center gap-2"><FileText size={18} /> 1. Paste your denial letter</h2>
+            <h2 className="font-semibold flex items-center gap-2"><FileText size={18} /> 1. Paste your denial notice</h2>
             <button className="text-sm text-emerald-700 underline" onClick={() => { setText(SAMPLE); setEdited(null); }}>Try a sample</button>
           </div>
           <textarea
             className="w-full h-48 border rounded-lg p-3 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500"
-            placeholder="Paste the text of the denial letter or Explanation of Benefits here…"
+            placeholder="Paste the text of the denial notice (Integrated Denial Notice / Notice of Denial of Medical Coverage) here…"
             value={text}
             onChange={e => { setText(e.target.value); setEdited(null); }}
           />
@@ -90,11 +90,15 @@ export default function App() {
               </label>
             ))}
             <label className="text-xs text-slate-500">
-              Date on denial letter
+              Date on denial notice
               <input type="date" className="mt-1 w-full border rounded-md px-2 py-1.5 text-sm text-slate-800" value={d.letterDate}
                 onChange={e => { setD({ ...d, letterDate: e.target.value }); setEdited(null); }} />
             </label>
           </div>
+          <label className="flex items-center gap-2 text-sm mt-3">
+            <input type="checkbox" checked={d.expedited} onChange={e => { setD({ ...d, expedited: e.target.checked }); setEdited(null); }} />
+            Waiting could seriously harm my health: request a fast (72-hour) decision
+          </label>
           <label className="text-xs text-slate-500 block mt-3">
             Anything else that supports your case (what your doctor said, treatments already tried…)
             <textarea className="mt-1 w-full border rounded-md px-2 py-1.5 text-sm text-slate-800 h-16" value={d.extra}
@@ -121,14 +125,18 @@ export default function App() {
               <div className="space-y-6">
                 <div className={`rounded-xl border p-5 ${daysLeft !== null && daysLeft < 30 ? 'bg-red-50 border-red-200' : 'bg-white'}`}>
                   <h2 className="font-semibold flex items-center gap-2"><CalendarClock size={18} /> Your deadline</h2>
-                  {analysis.deadlineDate ? (
+                  {analysis.primary.kind === 'services_ending' ? (
+                    <p className="mt-2 text-sm text-red-700 font-medium">
+                      URGENT: for ending rehab / skilled nursing / home health, call the QIO number on your notice by noon the day before coverage ends. Do not wait to send a letter.
+                    </p>
+                  ) : analysis.deadlineDate ? (
                     <p className="mt-2 text-sm">
                       Appeal by <b>{analysis.deadlineDate.toLocaleDateString('en-US', { dateStyle: 'long' })}</b>
                       {daysLeft !== null && <> — {daysLeft >= 0 ? `${daysLeft} days left` : 'this date has passed: appeal anyway and ask for a good-cause exception'}</>}
                       <span className="block text-slate-500 text-xs mt-1">Based on {analysis.deadlineDays} days from the letter date. Confirm against your letter.</span>
                     </p>
                   ) : (
-                    <p className="mt-2 text-sm">Enter the date on your letter above. Most plans give <b>180 days</b> to file an internal appeal.</p>
+                    <p className="mt-2 text-sm">Enter the date on your letter above. Medicare Advantage gives you <b>60 days</b> from the notice date to request a reconsideration.</p>
                   )}
                 </div>
                 <div className="bg-white rounded-xl shadow-sm border p-5">
@@ -144,7 +152,7 @@ export default function App() {
 
             <section className="bg-white rounded-xl shadow-sm border p-5">
               <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-                <h2 className="font-semibold flex items-center gap-2"><FileText size={18} /> Your appeal letter (editable)</h2>
+                <h2 className="font-semibold flex items-center gap-2"><FileText size={18} /> Your reconsideration request (editable)</h2>
                 <div className="flex gap-2">
                   <button onClick={copy} className="flex items-center gap-1 px-3 py-1.5 rounded-md bg-emerald-600 text-white text-sm">
                     {copied ? <Check size={16} /> : <ClipboardCopy size={16} />} {copied ? 'Copied' : 'Copy'}
@@ -154,8 +162,7 @@ export default function App() {
               </div>
               <textarea className="w-full h-[28rem] border rounded-lg p-3 text-sm font-mono" value={letter} onChange={e => setEdited(e.target.value)} />
               <p className="text-xs text-slate-500 mt-2">
-                Fill any [bracketed] blanks, send by certified mail or the insurer's portal, and keep a copy. If the internal appeal fails, most plans
-                give you the right to a free independent external review. Overturn is an information tool, not legal or medical advice.
+                Fill any [bracketed] blanks, send by certified mail, fax or the plan's portal, and keep proof. If the plan upholds its denial it must forward your case to an independent reviewer (the IRE) automatically. For urgent cases, also call 1-800-MEDICARE or your State Health Insurance Assistance Program (SHIP) for free help. Overturn is an information tool, not legal or medical advice.
               </p>
             </section>
           </>
